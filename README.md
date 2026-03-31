@@ -2,6 +2,7 @@
 2. 如果你是想在新环境运行，或者担心依赖不全，只需要在终端（PS 窗口）执行以下两步：
 
 3. 🛠️ 环境对齐清单
+   
 1). 在你的crawler.js所在文件夹目录下执行：
    
 npm install playwright
@@ -24,3 +25,6 @@ const CONFIG = {
         { id: '8',  name: '无码中文字幕', stopM: 3, stopD: 28 }
         
     ],
+    saveDir: './VideoResults',
+    dbFile: './history_db.json'
+};
