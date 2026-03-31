@@ -11,9 +11,9 @@ npx playwright install chromium
 脚本有查重功能，不会重复爬取重复视频。
 
 
-const CONFIG = {
-    baseUrl: 'http://1771ck.cc', //网址
-    categories: [
-        //{ id: '26', name: '骑兵破解', stopM: 3, stopD: 31 },      //1771ck.cc/vodtype/15.html中的15，可以设置爬取结束日期
-        { id: '8',  name: '无码中文字幕', stopM: 3, stopD: 28 }
-    ],
+const CONFIG = {\n
+    baseUrl: 'http://1771ck.cc', //网址\n
+    categories: [\n
+        //{ id: '26', name: '骑兵破解', stopM: 3, stopD: 31 },      //1771ck.cc/vodtype/15.html中的15，可以设置爬取结束日期\n
+        { id: '8',  name: '无码中文字幕', stopM: 3, stopD: 28 }\n
+    ],\n
