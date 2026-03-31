@@ -13,7 +13,7 @@ npx playwright install chromium
 
 const CONFIG = {
 
-    baseUrl: 'http://1771ck.cc', //网址\n
+    baseUrl: 'http://1771ck.cc', //网址
     
     categories: [
     
