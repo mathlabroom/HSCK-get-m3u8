@@ -16,7 +16,7 @@ async function run() {
     console.log("🚀 启动【隔离对齐模式】：每个视频独立处理，无视崩溃...");
     
     let videoDb = fs.existsSync(CONFIG.dbFile) ? JSON.parse(fs.readFileSync(CONFIG.dbFile, 'utf-8')) : [];
-    const browser = await chromium.launch({ headless: false }); 
+    const browser = await chromium.launch({ headless: true }); 
     const mainPage = await browser.newPage({ ...devices['iPhone 13'] });
 
     for (const cat of CONFIG.categories) {
