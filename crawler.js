@@ -3,10 +3,10 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG = {
-    baseUrl: 'http://1771ck.cc', 
+    baseUrl: 'http://1772ck.cc', 
     categories: [
-        //{ id: '26', name: '骑兵破解', stopM: 3, stopD: 31 },
-        { id: '8',  name: '无码中文字幕', stopM: 3, stopD: 28 }
+        { id: '26', name: '骑兵破解', stopM: 4, stopD: 1 },
+        { id: '8',  name: '无码中文字幕', stopM: 3, stopD: 31 }
     ],
     saveDir: './VideoResults',
     dbFile: './history_db.json'
@@ -54,7 +54,12 @@ async function run() {
                 if (m < cat.stopM || (m === cat.stopM && d < cat.stopD)) {
                     forceStop = true; break;
                 }
-                if (videoDb.includes(item.link)) continue;
+                // 🎯 修复逻辑：只提取 URL 最后的 ID 部分进行对比（例如 145503-1-1）
+                   const videoId = item.link.split('/').pop(); 
+                    if (videoDb.some(id => id.includes(videoId))) {
+                     // console.log(`   ⏭️ 跳过已存在的 ID: ${videoId}`);
+                    continue;
+                    }
 
                 console.log(`   🔎 处理中: [${item.date}] ${item.title.substring(0, 15)}`);
                 
