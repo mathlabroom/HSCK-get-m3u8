@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG = {
-    baseUrl: 'http://1772ck.cc', 
+    baseUrl: 'http://1776ck.cc', 
     categories: [
         { id: '26', name: '骑兵破解', stopM: 4, stopD: 1 },
         { id: '8',  name: '无码中文字幕', stopM: 3, stopD: 31 }
@@ -122,7 +122,7 @@ async function run() {
         }
     }
     await browser.close();
-    console.log('\n✨ 对齐任务圆满结束！');
+    console.log('\n✨ 收割任务圆满结束！');
 }
 
 run().catch(err => {
