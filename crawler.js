@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG = {
-    baseUrl: 'http://1776ck.cc', 
+    baseUrl: 'http://1516ck.cc', 
     categories: [
         { id: '26', name: '骑兵破解', stopM: 4, stopD: 1 },
         { id: '8',  name: '无码中文字幕', stopM: 3, stopD: 31 }
@@ -78,7 +78,7 @@ async function run() {
                         const cleanM = u.split('?')[0];
                         const catFolder = path.join(CONFIG.saveDir, cat.name);
                         if (!fs.existsSync(catFolder)) fs.mkdirSync(catFolder, { recursive: true });
-                        fs.appendFileSync(path.join(catFolder, `${cat.name}_清单.m3u8`), `#EXTINF:-1,[${item.date}] ${item.title}\n${cleanM}\n`);
+                        fs.appendFileSync(path.join(catFolder, `${cat.name}_清单.m3u8`), `#EXTINF:-1,${item.title}\n${cleanM} [${item.date}]\n`);
                         videoDb.push(item.link);
                         fs.writeFileSync(CONFIG.dbFile, JSON.stringify(videoDb, null, 2));
                         console.log(`      ✅ 成功收割: ${cleanM.split('/').pop()}`);
