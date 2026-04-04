@@ -28,3 +28,5 @@ const CONFIG = {
     saveDir: './VideoResults',
     dbFile: './history_db.json'
 };
+
+powershell或终端运行node crawler.js
