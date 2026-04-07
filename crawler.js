@@ -78,7 +78,7 @@ async function run() {
                         const cleanM = u.split('?')[0];
                         const catFolder = path.join(CONFIG.saveDir, cat.name);
                         if (!fs.existsSync(catFolder)) fs.mkdirSync(catFolder, { recursive: true });
-                        fs.appendFileSync(path.join(catFolder, `${cat.name}_清单.m3u8`), `#EXTINF:-1,${item.title}\n${cleanM} [${item.date}]\n`);
+                        fs.appendFileSync(path.join(catFolder, `${cat.name}_清单.m3u8`), `#EXTINF:-1,${item.title} [${item.date}]\n${cleanM}\n`);
                         videoDb.push(item.link);
                         fs.writeFileSync(CONFIG.dbFile, JSON.stringify(videoDb, null, 2));
                         console.log(`      ✅ 成功收割: ${cleanM.split('/').pop()}`);
