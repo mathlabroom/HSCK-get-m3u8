@@ -10,12 +10,12 @@
 3.  powershell或终端运行node crawler.js
   
 ##  备注
-const CONFIG = {
-    baseUrl: 'http://1771ck.cc', //网址
-    categories: [   
-        //{ id: '26', name: '骑兵破解', stopM: 3, stopD: 31 },      //1771ck.cc/vodtype/15.html中的15，可以设置爬取结束日期        
-        { id: '8',  name: '无码中文字幕', stopM: 3, stopD: 28 }        
-    ],
-    saveDir: './VideoResults',
-    dbFile: './history_db.json'
+const CONFIG = {  
+    baseUrl: 'http://1771ck.cc', //网址  
+    categories: [  
+        //{ id: '26', name: '骑兵破解', stopM: 3, stopD: 31 },      //1771ck.cc/vodtype/15.html中的15，可以设置爬取结束日期  
+        { id: '8',  name: '无码中文字幕', stopM: 3, stopD: 28 }  
+    ],  
+    saveDir: './VideoResults',  
+    dbFile: './history_db.json'  
 };
