@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG = {
-    baseUrl: 'http://1519ck.cc', 
+    baseUrl: 'http://1520ck.cc', 
     categories: [
         { id: '26', name: '骑兵破解', stopM: 4, stopD: 1 },
         { id: '8',  name: '无码中文字幕', stopM: 3, stopD: 31 }
@@ -13,7 +13,7 @@ const CONFIG = {
 };
 
 async function run() {
-    console.log("🚀 启动【隔离对齐模式】：每个视频独立处理，无视崩溃...");
+    console.log("🚀 启动【隔离抓取模式】：每个视频独立处理，无视崩溃...");
     
     let videoDb = fs.existsSync(CONFIG.dbFile) ? JSON.parse(fs.readFileSync(CONFIG.dbFile, 'utf-8')) : [];
     const browser = await chromium.launch({ headless: true }); 
