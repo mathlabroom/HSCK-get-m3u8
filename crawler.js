@@ -3,128 +3,149 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG = {
-    baseUrl: 'http://1520ck.cc', 
+    baseUrl: 'http://1786ck.cc', 
     categories: [
-        { id: '26', name: '骑兵破解', stopM: 4, stopD: 1 },
-        { id: '8',  name: '无码中文字幕', stopM: 3, stopD: 31 }
+        { id: '8',  name: '无码中文字幕', startP: 2, stopM: 4, stopD: 9 },
+        { id: '2',  name: '国产系列', startP: 20, stopM: 1, stopD: 1 }
     ],
     saveDir: './VideoResults',
     dbFile: './history_db.json'
 };
 
 async function run() {
-    console.log("🚀 启动【隔离抓取模式】：每个视频独立处理，无视崩溃...");
+    console.log("🚀 启动【极致省流源码直取模式】...");
     
     let videoDb = fs.existsSync(CONFIG.dbFile) ? JSON.parse(fs.readFileSync(CONFIG.dbFile, 'utf-8')) : [];
     const browser = await chromium.launch({ headless: true }); 
     const mainPage = await browser.newPage({ ...devices['iPhone 13'] });
 
+    // 极致拦截：只要 HTML 文档
+    await mainPage.route('**/*', (route) => {
+        return route.request().resourceType() === 'document' ? route.continue() : route.abort();
+    });
+
     for (const cat of CONFIG.categories) {
-        console.log(`\n📂 进入分类: ${cat.name}`);
+        console.log(`\n📂 进入分类: ${cat.name} (从第 ${cat.startP || 1} 页开始)`);
         let forceStop = false;
 
-        for (let p = 1; p <= 100; p++) {
+        for (let p = (cat.startP || 1); p <= 1000; p++) {
             if (forceStop) break;
+            
+            let items = [];
             try {
-                await mainPage.goto(`${CONFIG.baseUrl}/vodtype/${cat.id}-${p}.html`, { waitUntil: 'domcontentloaded' });
-            } catch (e) { continue; }
-
-            const items = await mainPage.evaluate((base) => {
-                const res = [];
-                document.querySelectorAll('.stui-vodlist li').forEach(li => {
-                    const a = li.querySelector('h4.title a');
-                    const sub = li.querySelector('p.sub');
-                    if (a && sub) {
-                        const href = a.getAttribute('href') || "";
-                        const date = sub.innerText.trim();
-                        if (href.includes('vod') && date.includes('-')) {
-                            res.push({
-                                title: a.innerText.trim(),
-                                link: href.startsWith('http') ? href : base + href,
-                                date: date.match(/(\d{2}-\d{2})/)[0]
-                            });
+                await mainPage.goto(`${CONFIG.baseUrl}/vodtype/${cat.id}-${p}.html`, { waitUntil: 'domcontentloaded', timeout: 25000 });
+                
+                items = await mainPage.evaluate((base) => {
+                    const res = [];
+                    document.querySelectorAll('.stui-vodlist li').forEach(li => {
+                        const a = li.querySelector('h4.title a');
+                        const sub = li.querySelector('p.sub');
+                        if (sub && a) {
+                            const dateMatch = sub.innerText.trim().match(/(\d{2}-\d{2})/);
+                            const href = a.getAttribute('href') || "";
+                            if (dateMatch && href.includes('vod')) {
+                                res.push({
+                                    title: a.innerText.trim(),
+                                    link: href.startsWith('http') ? href : base + href,
+                                    date: dateMatch[0] // 修正索引
+                                });
+                            }
                         }
-                    }
-                });
-                return res;
-            }, CONFIG.baseUrl);
+                    });
+                    return res;
+                }, CONFIG.baseUrl);
+
+                if (items.length === 0) break;
+                console.log(`📑 第 ${p} 页扫描完毕，发现 ${items.length} 条资源`);
+            } catch (e) { 
+                console.log(`⚠️ 第 ${p} 页列表加载失败，跳过...`);
+                continue; 
+            }
+
+            let expireCount = 0; 
 
             for (const item of items) {
+                const idMatch = item.link.match(/vodplay\/(\d+)/);
+                const videoId = idMatch ? idMatch[1] : null;
+                if (!videoId) continue;
+                
                 const [m, d] = item.date.split('-').map(Number);
-                if (m < cat.stopM || (m === cat.stopM && d < cat.stopD)) {
-                    forceStop = true; break;
+                const isOld = (cat.stopM && (m < cat.stopM || (m === cat.stopM && d < cat.stopD)));
+
+                if (videoDb.includes(videoId) || isOld) {
+                    if (isOld) {
+                        expireCount++;
+                        if (expireCount >= 3) {
+                            console.log(`🛑 连续旧片 [${item.date}]，该分类结束`);
+                            forceStop = true; break;
+                        }
+                    }
+                    continue; 
                 }
-                // 🎯 修复逻辑：只提取 URL 最后的 ID 部分进行对比（例如 145503-1-1）
-                   const videoId = item.link.split('/').pop(); 
-                    if (videoDb.some(id => id.includes(videoId))) {
-                     // console.log(`   ⏭️ 跳过已存在的 ID: ${videoId}`);
-                    continue;
-                    }
 
-                console.log(`   🔎 处理中: [${item.date}] ${item.title.substring(0, 15)}`);
+                expireCount = 0; 
                 
-                // 🛠️ 关键改动：开启完全隔离的新上下文处理单个视频
-                const tempContext = await browser.newContext({ ...devices['iPhone 13'] });
-                // 阻断图片加载，节省内存
-                await tempContext.route('**/*.{png,jpg,jpeg,gif,css}', route => route.abort());
-                
-                const detailPage = await tempContext.newPage();
-                let captured = false;
+                // --- 开始收割逻辑 ---
+                let finalM3u8 = null;
+                let retry = 2; 
 
-                detailPage.on('request', req => {
-                    const u = req.url();
-                    if (u.includes('.m3u8') && !captured) {
-                        captured = true;
-                        const cleanM = u.split('?')[0];
-                        const catFolder = path.join(CONFIG.saveDir, cat.name);
-                        if (!fs.existsSync(catFolder)) fs.mkdirSync(catFolder, { recursive: true });
-                        fs.appendFileSync(path.join(catFolder, `${cat.name}_清单.m3u8`), `#EXTINF:-1,${item.title} [${item.date}]\n${cleanM}\n`);
-                        videoDb.push(item.link);
-                        fs.writeFileSync(CONFIG.dbFile, JSON.stringify(videoDb, null, 2));
-                        console.log(`      ✅ 成功收割: ${cleanM.split('/').pop()}`);
+                while (retry > 0 && !finalM3u8) {
+                    try {
+                        // 1. 拟人休眠
+                        await new Promise(r => setTimeout(r, 1200 + Math.random() * 1000));
+                        
+                        // 2. 访问页面 (commit 级别)
+                        await mainPage.goto(item.link, { waitUntil: 'commit', timeout: 15000 });
+                        
+                        // 3. 第一次尝试提取
+                        let html = await mainPage.content();
+                        // 针对转义斜杠优化的暴力正则
+                        let rawMatch = html.match(/https?[:\\]+[^"']+\.m3u8[^"']*/i);
+                        
+                        if (!rawMatch) {
+                            // 【回马枪】如果没抓到，等 2.5 秒（给服务器吐源码的时间），再拉一次
+                            await new Promise(r => setTimeout(r, 2500));
+                            html = await mainPage.content();
+                            rawMatch = html.match(/https?[:\\]+[^"']+\.m3u8[^"']*/i);
+                        }
+
+                        if (rawMatch) {
+                            finalM3u8 = rawMatch[0].replace(/\\/g, ""); 
+                        }
+                        
+                        if (!finalM3u8) {
+                            retry--;
+                            if(retry > 0) console.log(`     🔄 未匹配到地址，准备第 ${3-retry} 次重试...`);
+                        }
+                    } catch (e) {
+                        retry--;
+                        console.log(`     ⚠️ 网络异常 (${e.message.substring(0,20)})，剩余重试: ${retry}`);
                     }
-                });
-
-                try {
-                    // 进入播放页，只要 HTML 出来就立刻操作
-                    await detailPage.goto(item.link, { waitUntil: 'commit', timeout: 25000 }).catch(()=>{});
-                    await detailPage.waitForTimeout(3000);
-
-                    // 穿透点击：直接查找页面所有可能的播放元素并点击
-                    await detailPage.evaluate(() => {
-                        const selectors = ['.stui-player__video', '#playleft', 'video', 'iframe', '.playbtn'];
-                        selectors.forEach(s => {
-                            const el = document.querySelector(s);
-                            if (el) {
-                                el.click();
-                                // 如果是 iframe，尝试点击它的中心
-                                const rect = el.getBoundingClientRect();
-                                el.dispatchEvent(new MouseEvent('click', {
-                                    clientX: rect.left + rect.width / 2,
-                                    clientY: rect.top + rect.height / 2
-                                }));
-                            }
-                        });
-                    }).catch(()=>{});
-
-                    // 给 CDN 15 秒加载 index.m3u8 的时间
-                    for (let i = 0; i < 15; i++) {
-                        if (captured || detailPage.isClosed()) break;
-                        await new Promise(r => setTimeout(r, 1000));
-                    }
-                } catch (e) {
-                    console.log(`      ⚠️ 任务超时或页面崩溃，自动跳过...`);
-                } finally {
-                    // 彻底销毁上下文，释放内存，防止被广告追踪
-                    await tempContext.close().catch(()=>{});
                 }
-            }
-        }
+
+                if (finalM3u8 && finalM3u8.toLowerCase().includes('m3u8')) {
+                    const cleanM = finalM3u8.split('?')[0];
+                    const catFolder = path.join(CONFIG.saveDir, cat.name);
+                    if (!fs.existsSync(catFolder)) fs.mkdirSync(catFolder, { recursive: true });
+                    
+                    fs.appendFileSync(
+                        path.join(catFolder, `${cat.name}_清单.m3u8`), 
+                        `#EXTINF:-1,${item.title} [${item.date}]\n${cleanM}\n`
+                    );
+
+                    // 成功才记录
+                    videoDb.push(videoId); 
+                    fs.writeFileSync(CONFIG.dbFile, JSON.stringify(videoDb, null, 2));
+                    console.log(`     ✅ 提取成功: [${item.date}] ${videoId}`);
+                } else {
+                    console.log(`     ❌ 无法获取地址 (不记录): ${videoId}`);
+                }
+            } 
+        } 
     }
+
     await browser.close();
-    console.log('\n✨ 收割任务圆满结束！');
+    console.log('\n✨ 任务全部圆满完成！');
 }
 
-run().catch(err => {
-    console.error("🚨 发生了未预料的崩溃，请重新运行脚本即可断点续传:", err);
-});
+run().catch(err => { console.error("🚨 核心崩溃:", err); });
