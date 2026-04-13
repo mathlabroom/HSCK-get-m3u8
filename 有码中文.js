@@ -7,13 +7,13 @@ const chalk = require('chalk');
 // 🛠️ 顶层参数配置区 (所有修改仅在此处)
 // ========================================================
 const TASK_CONFIG = {
-    baseUrl: 'http://1791ck.cc',       // 初始目标域名
+    baseUrl: 'http://1792ck.cc',       // 初始目标域名
     catId: '9',                      // 分类 ID
     catName: '有码中文字幕',               // 分类名称
     startPage: 1,                   // 本窗口起始页码
-    stopPage: 2000,                   // 本窗口终止页码
-    stopMonth: null,                  // 日期截断：月 (如 4)
-    stopDay: null,                    // 日期截断：日 (如 10)
+    stopPage: 300,                   // 本窗口终止页码
+    stopMonth: 4,                  // 日期截断：月 (如 4)
+    stopDay: 12,                    // 日期截断：日 (如 10)
     saveDir: './VideoResults',        // 结果保存目录
     dbFile: './有码中文字幕.json',     // 数据库文件名 (多开建议不同名)
     edgePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
