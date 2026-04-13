@@ -11,9 +11,9 @@ const TASK_CONFIG = {
     catId: '2',                      // 分类 ID
     catName: '国产系列',               // 分类名称
     startPage: 1,                   // 本窗口起始页码
-    stopPage: 20,                   // 本窗口终止页码
-    stopMonth: 4,                  // 日期截断：月 (如 4)
-    stopDay: 9,                    // 日期截断：日 (如 10)
+    stopPage: 2000,                   // 本窗口终止页码
+    stopMonth: null,                  // 日期截断：月 (如 4)
+    stopDay: null,                    // 日期截断：日 (如 10)
     saveDir: './VideoResults',        // 结果保存目录
     dbFile: './国产系列.json',     // 数据库文件名 (多开建议不同名)
     edgePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
@@ -68,10 +68,32 @@ async function run() {
 
         try {
             // 访问列表页
-            const listUrl = `${TASK_CONFIG.baseUrl.replace(/\/$/, '')}/vodtype/${TASK_CONFIG.catId}-${p}.html`;
+            // 1. 构造初始访问目标
+            let listUrl = `${TASK_CONFIG.baseUrl.replace(/\/$/, '')}/vodtype/${TASK_CONFIG.catId}-${p}.html`;
+            
+            // 2. 尝试访问
             await mainPage.goto(listUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
+            
+            // 3. 核心判断：如果实际 URL 变了，说明被弹回首页了
+            const currentUrl = mainPage.url();
+            const match = currentUrl.match(/^https?:\/\/[^\/]+/i);
+            
+            if (match && match[0] !== TASK_CONFIG.baseUrl.replace(/\/$/, '')) {
+                console.log(style.warn(`\n🔗 [PID: ${PID}] 检测到强制跳转！正在切换新域名重爬: ${match[0]}`));
+                
+                // 更新全局域名
+                TASK_CONFIG.baseUrl = match[0];
+                
+                // 重新构造正确的第 p 页 URL 并再次访问
+                listUrl = `${TASK_CONFIG.baseUrl}/vodtype/${TASK_CONFIG.catId}-${p}.html`;
+                console.log(style.info(`🔄 [PID: ${PID}] 重新定位至: ${listUrl}`));
+                await mainPage.goto(listUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+            }
+
+            // 4. 这里的 syncDomain 其实已经被上面的逻辑覆盖了，但留着也没坏处
             syncDomain(mainPage.url());
 
+            // 5. 下面才是开始解析页面内容
             const items = await mainPage.evaluate(() => {
                 const res = [];
                 document.querySelectorAll('.stui-vodlist li').forEach(li => {
