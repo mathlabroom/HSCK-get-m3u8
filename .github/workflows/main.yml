@@ -29,6 +29,7 @@ jobs:
         run: |
           gh release delete latest --yes || true
           git push origin :refs/tags/latest || true
+          sleep 5  # 给 GitHub 5 秒钟反应时间
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -44,5 +45,6 @@ jobs:
             已根据本地上传的最新清单完成 E2 花束转换。
           prerelease: false
           make_latest: true
+          overwrite: true  # 强制覆盖已存在的资源
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
