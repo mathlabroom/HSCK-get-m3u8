@@ -1,9 +1,48 @@
-- name: Generate E2 Bouquets
-        run: node to_bouquet.js
+name: "E2 Bouquet Auto Converter"
+
+on:
+  push:
+    paths:
+      - 'VideoResults/**/*.m3u8'  # 只有当你上传了新的 m3u8 时才触发
+  workflow_dispatch:              # 允许手动点按钮触发
+
+jobs:
+  convert_and_release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Generate E2 Bouquets
+        run: |
+          node to_bouquet.js
+
+      - name: Delete old release
+        run: |
+          gh release delete latest --yes || true
+          git push origin :refs/tags/latest || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
+          name: "Latest Enigma2 Bouquets"
           files: |
             E2_Bouquets/*.tv
+            VideoResults/**/*.m3u8
+          body: |
+            已根据本地上传的最新清单完成 E2 花束转换。
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
