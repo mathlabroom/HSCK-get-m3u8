@@ -37,12 +37,30 @@ jobs:
 
       - name: Update GitHub Release (CLI Mode)
         run: |
-          # 1. 创建 Release
-          gh release create latest --title "Latest Enigma2 Bouquets" --notes "自动同步" || echo "Release already exists"
+          # 1. 如果已存在 latest release，先删除它以便重新发布干净的资源
+          gh release delete latest --yes || true
+          git push origin :refs/tags/latest || true
           
-          # 2. 批量上传文件 (gh 自动处理覆盖)
-          # 使用 find 找到所有文件并逐个上传
-          find E2_Bouquets/ -name "*.tv" -exec gh release upload latest {} --clobber \;
-          find VideoResults/ -name "*.m3u8" -exec gh release upload latest {} --clobber \;
+          # 给服务器一点反应时间
+          sleep 5
+          
+          # 2. 创建全新的 Release
+          gh release create latest --title "Latest Enigma2 Bouquets" --notes "自动生成：包含独立的 .tv 分类文件和 m3u8 清单"
+          
+          # 3. 逐个上传 E2_Bouquets 目录下的所有 .tv 文件
+          # 这样能确保每个文件都以原始文件名出现在 Assets 里
+          for file in E2_Bouquets/*.tv; do
+            if [ -f "$file" ]; then
+              echo "正在上传: $file"
+              gh release upload latest "$file" --clobber
+            fi
+          done
+
+          # 4. 逐个上传 VideoResults 下各子目录中的 m3u8 文件
+          # 使用 find 命令找出所有清单文件并上传
+          find VideoResults -name "*_清单.m3u8" | while read -r m3u8_file; do
+            echo "正在上传清单: $m3u8_file"
+            gh release upload latest "$m3u8_file" --clobber
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
