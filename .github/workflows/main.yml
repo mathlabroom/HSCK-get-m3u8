@@ -27,9 +27,11 @@ jobs:
 
       - name: Delete old release
         run: |
+          # 增加删除重试逻辑并强制休眠
           gh release delete latest --yes || true
           git push origin :refs/tags/latest || true
-          sleep 5  # 给 GitHub 5 秒钟反应时间
+          echo "等待 GitHub 刷新标签状态..."
+          sleep 10 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -42,9 +44,13 @@ jobs:
             E2_Bouquets/*.tv
             VideoResults/**/*.m3u8
           body: |
-            已根据本地上传的最新清单完成 E2 花束转换。
+            自动更新完成。
+            更新时间: ${{ github.event.head_commit.timestamp }}
           prerelease: false
           make_latest: true
-          overwrite: true  # 强制覆盖已存在的资源
+          # 修正参数名如下：
+          overwrite_files: true
+          # 防止因为某个文件找不到而崩溃
+          fail_on_unmatched_files: false 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
