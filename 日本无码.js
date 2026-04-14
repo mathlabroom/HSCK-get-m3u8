@@ -11,9 +11,9 @@ const TASK_CONFIG = {
     catId: '10',                      // 分类 ID
     catName: '日本无码',               // 分类名称
     startPage: 1,                   // 本窗口起始页码
-    stopPage: 200,                   // 本窗口终止页码
-    stopMonth: 4,                  // 日期截断：月 (如 4)
-    stopDay: 12,                    // 日期截断：日 (如 10)
+    stopPage: 2000,                   // 本窗口终止页码
+    stopMonth: null,                  // 日期截断：月 (如 4)
+    stopDay: null,                    // 日期截断：日 (如 10)
     saveDir: './VideoResults',        // 结果保存目录
     dbFile: './日本无码.json',     // 数据库文件名 (多开建议不同名)
     edgePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
