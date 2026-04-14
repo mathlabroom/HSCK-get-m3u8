@@ -1,0 +1,9 @@
+- name: Generate E2 Bouquets
+        run: node to_bouquet.js
+
+      - name: Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          files: |
+            E2_Bouquets/*.tv
