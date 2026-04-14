@@ -37,31 +37,27 @@ jobs:
 
       - name: Update GitHub Release (CLI Mode)
         run: |
-          # 1. 清理旧版本
-          gh release delete latest --yes || true
-          git push origin :refs/tags/latest || true
-          sleep 5
-          
-          # 2. 创建新版本
-          gh release create latest --title "Latest Enigma2 Bouquets" --notes "自动生成：分类清单"
+          # 1. 创建 Release (如果已存在则忽略错误)
+          gh release create latest --title "Latest Enigma2 Bouquets" --notes "自动生成：分类清单" || echo "Release exists"
 
-          # 3. 上传 .tv 文件
-          # 重点：先 cd 进去，这样 gh 拿到的文件名就是干净的
-          cd E2_Bouquets
-          for file in *.tv; do
-            if [ -f "$file" ]; then
-              echo "正在上传: $file"
-              gh release upload latest "$file" --clobber --repo ${{ github.repository }}
-            fi
-          done
-          cd ..
+          # 2. 上传 E2_Bouquets 目录下的 .tv 文件
+          # 使用 (cd ...) 括号语法可以在不改变当前 shell 路径的情况下进入目录操作
+          (
+            cd E2_Bouquets
+            for file in *.tv; do
+              [ -e "$file" ] || continue
+              echo "正在上传花束文件: $file"
+              gh release upload latest "$file" --clobber
+            done
+          )
 
-          # 4. 上传 m3u8 文件
-          # 同样处理：利用 find 找到文件后，在当前目录执行上传
-          find VideoResults -name "*_清单.m3u8" | while read -r m3u8_file; do
-            echo "正在上传清单: $m3u8_file"
-            # 这里直接传路径，gh 通常能处理好带下划线的中文名
-            gh release upload latest "$m3u8_file" --clobber --repo ${{ github.repository }}
+          # 3. 递归寻找所有子目录下的 m3u8 清单并上传
+          # 使用 find 并配合 basename，确保上传到 GitHub 的名字不带路径前缀
+          find VideoResults -name "*_清单.m3u8" | while read -r m3u8_path; do
+            filename=$(basename "$m3u8_path")
+            echo "正在处理清单文件: $filename (路径: $m3u8_path)"
+            # 这里的技巧是：把文件传给 gh 的标准输入，并用 --name 指定 GitHub 上的显示名称
+            gh release upload latest "$m3u8_path" --clobber --name "$filename"
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
