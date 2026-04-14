@@ -35,22 +35,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: latest
-          name: "Latest Enigma2 Bouquets"
-          files: |
-            E2_Bouquets/*.tv
-            VideoResults/**/*.m3u8
-          body: |
-            自动更新完成。
-            更新时间: ${{ github.event.head_commit.timestamp }}
-          prerelease: false
-          make_latest: true
-          # 修正参数名如下：
-          overwrite_files: true
-          # 防止因为某个文件找不到而崩溃
-          fail_on_unmatched_files: false 
+      - name: Update GitHub Release (CLI Mode)
+        run: |
+          # 1. 创建 Release
+          gh release create latest --title "Latest Enigma2 Bouquets" --notes "自动同步" || echo "Release already exists"
+          
+          # 2. 批量上传文件 (gh 自动处理覆盖)
+          # 使用 find 找到所有文件并逐个上传
+          find E2_Bouquets/ -name "*.tv" -exec gh release upload latest {} --clobber \;
+          find VideoResults/ -name "*.m3u8" -exec gh release upload latest {} --clobber \;
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
