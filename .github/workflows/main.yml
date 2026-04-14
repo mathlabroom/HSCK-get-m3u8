@@ -37,26 +37,31 @@ jobs:
 
       - name: Update GitHub Release (CLI Mode)
         run: |
+          # 1. 清理旧版本
           gh release delete latest --yes || true
           git push origin :refs/tags/latest || true
           sleep 5
+          
+          # 2. 创建新版本
           gh release create latest --title "Latest Enigma2 Bouquets" --notes "自动生成：分类清单"
 
-          # 关键修改：显式指定上传的文件名
-          for file in E2_Bouquets/*.tv; do
+          # 3. 上传 .tv 文件
+          # 重点：先 cd 进去，这样 gh 拿到的文件名就是干净的
+          cd E2_Bouquets
+          for file in *.tv; do
             if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              echo "正在上传: $filename"
-              # 使用引号包裹路径，防止中文空格失效
-              gh release upload latest "$file" --name "$filename" --clobber
+              echo "正在上传: $file"
+              gh release upload latest "$file" --clobber --repo ${{ github.repository }}
             fi
           done
+          cd ..
 
-          # 同样处理 m3u8
+          # 4. 上传 m3u8 文件
+          # 同样处理：利用 find 找到文件后，在当前目录执行上传
           find VideoResults -name "*_清单.m3u8" | while read -r m3u8_file; do
-            filename=$(basename "$m3u8_file")
-            echo "正在上传清单: $filename"
-            gh release upload latest "$m3u8_file" --name "$filename" --clobber
+            echo "正在上传清单: $m3u8_file"
+            # 这里直接传路径，gh 通常能处理好带下划线的中文名
+            gh release upload latest "$m3u8_file" --clobber --repo ${{ github.repository }}
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
