@@ -1,13 +1,13 @@
-name: "E2 Bouquet Auto Converter"
+name: "E2 Bouquet Sync to Repo"
 
 on:
   push:
     paths:
-      - 'VideoResults/**/*.m3u8'  # 只有当你上传了新的 m3u8 时才触发
-  workflow_dispatch:              # 允许手动点按钮触发
+      - 'VideoResults/**/*.m3u8'
+  workflow_dispatch:
 
 jobs:
-  convert_and_release:
+  convert_and_push:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -25,44 +27,18 @@ jobs:
         run: |
           node to_bouquet.js
 
-      - name: Delete old release
+      - name: Commit and Push .tv files
         run: |
-          # 增加删除重试逻辑并强制休眠
-          gh release delete latest --yes || true
-          git push origin :refs/tags/latest || true
-          echo "等待 GitHub 刷新标签状态..."
-          sleep 10 
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update GitHub Release (CLI Mode)
-        run: |
-          # 1. 确保 Release 存在
-          gh release create latest --title "Latest Enigma2 Bouquets" --notes "自动生成：分类清单" || echo "Release exists"
-
-          # 2. 上传 E2_Bouquets 目录下的 .tv 文件
-          if [ -d "E2_Bouquets" ]; then
-            cd E2_Bouquets
-            for file in *.tv; do
-              [ -e "$file" ] || continue
-              echo "正在上传花束文件: $file"
-              gh release upload latest "$file" --clobber --repo ${{ github.repository }}
-            done
-            cd ..
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # 强制添加生成的 .tv 文件，即使它们在 .gitignore 里
+          git add E2_Bouquets/*.tv
+          
+          # 检查是否有文件变化，有才提交
+          if git diff --staged --quiet; then
+            echo "没有新变化，跳过提交。"
+          else
+            git commit -m "自动更新 E2 花束文件: $(date +'%Y-%m-%d %H:%M:%S')"
+            git push origin main
           fi
-
-          # 3. 上传各子目录下的 m3u8 清单
-          # 使用 find 找到目录，进入后再上传，彻底解决路径导致的重命名问题
-          find VideoResults -name "*_清单.m3u8" | while read -r m3u8_path; do
-            dir_path=$(dirname "$m3u8_path")
-            file_name=$(basename "$m3u8_path")
-            echo "正在处理目录: $dir_path 中的文件: $file_name"
-            
-            # 进入目录上传，完成后返回
-            (
-              cd "$dir_path"
-              gh release upload latest "$file_name" --clobber --repo ${{ github.repository }}
-            )
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
