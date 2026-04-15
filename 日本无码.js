@@ -7,11 +7,11 @@ const chalk = require('chalk');
 // 🛠️ 顶层参数配置区 (所有修改仅在此处)
 // ========================================================
 const TASK_CONFIG = {
-    baseUrl: 'http://1792ck.cc',       // 初始目标域名
+    baseUrl: 'http://1794ck.cc',       // 初始目标域名
     catId: '10',                      // 分类 ID
     catName: '日本无码',               // 分类名称
     startPage: 1,                   // 本窗口起始页码
-    stopPage: 2000,                   // 本窗口终止页码
+    stopPage: 5,                   // 本窗口终止页码
     stopMonth: null,                  // 日期截断：月 (如 4)
     stopDay: null,                    // 日期截断：日 (如 10)
     saveDir: './VideoResults',        // 结果保存目录

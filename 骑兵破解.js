@@ -11,7 +11,7 @@ const TASK_CONFIG = {
     catId: '26',                      // 分类 ID
     catName: '骑兵破解',               // 分类名称
     startPage: 1,                   // 本窗口起始页码
-    stopPage: 2000,                   // 本窗口终止页码
+    stopPage: 30,                   // 本窗口终止页码
     stopMonth: 4,                  // 日期截断：月 (如 4)
     stopDay: 13,                    // 日期截断：日 (如 10)
     saveDir: './VideoResults',        // 结果保存目录
