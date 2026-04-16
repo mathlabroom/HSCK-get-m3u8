@@ -2,9 +2,9 @@ const fs = require('fs');
 
 // --- 配置区 ---
 const FILES = {
-    main: './国产系列.json',      // 包含多余数据的“大库”
-    sub1: './日本有码.json',    // 需要剔除的子库 1
-	sub2: './日本无码.json',    // 需要剔除的子库 1
+    main: './日本有码.json',      // 包含多余数据的“大库”
+    sub1: './有码中文字幕.json',    // 需要剔除的子库 1
+	sub2: './无码中文字幕.json',    // 需要剔除的子库 1
 };
 
 function cleanDatabase() {

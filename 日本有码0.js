@@ -11,7 +11,7 @@ const TASK_CONFIG = {
     defaultBaseUrl: 'http://1794ck.cc',   // 默认起始域名
     catId: '7',                         // 分类 ID
     catName: '日本有码',                  // 分类名称（仅用于显示）
-    startPage: 1,                        // 起始页码
+    startPage: 70,                        // 起始页码
     stopPage: 2000,                      // 终止页码
     outputFile: './日本有码.csv', // 索引结果文件
     edgePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'

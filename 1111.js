@@ -4,8 +4,8 @@ const chalk = require('chalk');
 
 // --- 配置区 ---
 const CHECK_CONFIG = {
-    csvFile: './国产系列.csv',      // 索引表
-    m3u8File: './VideoResults/国产系列/国产系列_清单.m3u8', // 合并后的结果文件
+    csvFile: './日本有码.csv',      // 索引表
+    m3u8File: './VideoResults/日本有码/日本有码_清单.m3u8', // 合并后的结果文件
     missingReport: './Missing_Videos.txt',   // 索引中有，但文件中没搜到的
     unmatchedReport: './Unmatched_m3u8.txt'  // 文件中有，但无法对应到索引标题的
 };
