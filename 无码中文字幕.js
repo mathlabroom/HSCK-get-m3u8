@@ -4,23 +4,35 @@ const path = require('path');
 const chalk = require('chalk');
 
 // ========================================================
+// 📅 自动计算日期逻辑 (获取昨天)
+// ========================================================
+const yesterday = new Date();
+yesterday.setDate(yesterday.getDate() - 1);
+const defaultMonth = yesterday.getMonth() + 1; // 月份从0开始，所以+1
+const defaultDay = yesterday.getDate();
+
+// 获取命令行参数: [起始页, 终止页, 进程标识, 强制月份, 强制日期]
+const args = process.argv.slice(2);
+
+// ========================================================
 // 🛠️ 顶层参数配置区 (所有修改仅在此处)
 // ========================================================
 const TASK_CONFIG = {
-    baseUrl: 'http://1792ck.cc',       // 初始目标域名
+    baseUrl: 'http://1794ck.cc',       // 初始目标域名
     catId: '8',                      // 分类 ID
     catName: '无码中文字幕',               // 分类名称
-    startPage: 1,                   // 本窗口起始页码
-    stopPage: 20,                   // 本窗口终止页码
-    stopMonth: 4,                  // 日期截断：月 (如 4)
-    stopDay: 13,                    // 日期截断：日 (如 10)
+    startPage: parseInt(args[0]) || 1,
+    stopPage: parseInt(args[1]) || 60,
+    // 自动刹车：优先用参数，没传参数就用“昨天”
+    stopMonth: args[3] ? parseInt(args[3]) : defaultMonth,
+    stopDay: args[4] ? parseInt(args[4]) : defaultDay,
     saveDir: './VideoResults',        // 结果保存目录
     dbFile: './无码中文字幕.json',     // 数据库文件名 (多开建议不同名)
     edgePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
 };
 
-// 获取当前进程 PID，用于区分文件后缀
-const PID = process.pid;
+// 使用命令行传入的进程标识，或者使用系统 PID
+const PID = args[2] || process.pid;
 
 const style = {
     info: chalk.cyan,
@@ -190,7 +202,62 @@ async function run() {
     }
 
     await browser.close();
+
+    // ========================================================
+    // 🛠️ 增强版：自动合并、排序、清理逻辑
+    // ========================================================
+    const catFolder = path.join(process.cwd(), TASK_CONFIG.saveDir, TASK_CONFIG.catName);
+    const pidFile = path.join(catFolder, `${TASK_CONFIG.catName}_PID_${PID}.m3u8`);
+    const mainFile = path.join(catFolder, `${TASK_CONFIG.catName}.m3u8`);
+    
+    if (fs.existsSync(pidFile)) {
+        console.log(style.info(`\n正在读取并排序合并数据...`));
+    
+        // 1. 定义解析函数：将 m3u8 内容转为对象数组 [{info, url, title}, ...]
+        const parseM3u = (filePath) => {
+            if (!fs.existsSync(filePath)) return [];
+            const content = fs.readFileSync(filePath, 'utf-8');
+            const lines = content.split('\n').filter(line => line.trim() !== '' && !line.startsWith('#EXTM3U'));
+            const result = [];
+            for (let i = 0; i < lines.length; i += 2) {
+                if (lines[i] && lines[i + 1]) {
+                    result.push({
+                        info: lines[i],
+                        url: lines[i + 1],
+                        // 提取标题用于排序：取逗号后面的部分
+                        title: lines[i].split(',')[1] || "" 
+                    });
+                }
+            }
+            return result;
+        };
+
+        // 2. 获取旧数据和新数据
+        let allEntries = [...parseM3u(mainFile), ...parseM3u(pidFile)];
+    
+        // 3. 按标题进行字母/数字排序 (localeCompare 支持中文排序)
+        allEntries.sort((a, b) => a.title.localeCompare(b.title, 'zh-Hans-CN', { numeric: true }));
+    
+        // 4. 重新构建带文件头的内容
+        let finalContent = "#EXTM3U\n";
+        allEntries.forEach(item => {
+            finalContent += `${item.info}\n${item.url}\n`;
+        });
+
+        // 5. 覆盖写入主文件并删除临时文件
+        try {
+            fs.writeFileSync(mainFile, finalContent, 'utf-8');
+            fs.unlinkSync(pidFile);
+            console.log(style.success(`\n✨ 已按标题排序并合并至: ${path.basename(mainFile)}`));
+        } catch (err) {
+            console.log(style.error(`\n🚨 文件操作失败: ${err.message}`));
+        }
+    }
+    
     console.log(style.success(`\n✨ [PID: ${PID}] 任务圆满完成！`));
 }
 
-run().catch(err => { console.error(style.error(`🚨 [PID: ${PID}] 核心崩溃:`), err); });
+// 启动并捕获全局错误
+run().catch(err => {
+    console.error(chalk.red.bold(`\n🚨 脚本运行崩溃: `), err);
+});	
