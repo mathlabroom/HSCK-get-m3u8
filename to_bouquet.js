@@ -12,8 +12,10 @@ const CATEGORY_MAP = {
     "骑兵破解": { bouquetId: "2", hexId: "66" },
     "无码中文字幕": { bouquetId: "3", hexId: "67" },
     "有码中文字幕": { bouquetId: "4", hexId: "68" },
-    "日本有码": { bouquetId: "6", hexId: "69" },
-    "日本无码": { bouquetId: "7", hexId: "6A" }
+    "日本有码": { bouquetId: "5", hexId: "69" },
+    "日本无码": { bouquetId: "6", hexId: "6A" },,
+	"欧美高清": { bouquetId: "7", hexId: "6B" },
+	"动漫": { bouquetId: "8", hexId: "6C" }
 };
 
 function convert() {
