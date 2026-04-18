@@ -205,53 +205,67 @@ async function run() {
     await browser.close();
 
     // ========================================================
-    // 🛠️ 增强版：自动合并、排序、清理逻辑
+    // 🚚 终极防错逻辑：特征配对、不丢链接、强制排序
     // ========================================================
     const catFolder = path.join(process.cwd(), TASK_CONFIG.saveDir, TASK_CONFIG.catName);
     const pidFile = path.join(catFolder, `${TASK_CONFIG.catName}_PID_${PID}.m3u8`);
     const mainFile = path.join(catFolder, `${TASK_CONFIG.catName}.m3u8`);
-    
-    if (fs.existsSync(pidFile)) {
-        console.log(style.info(`\n正在读取并排序合并数据...`));
-    
-        // 1. 定义解析函数：将 m3u8 内容转为对象数组 [{info, url, title}, ...]
-        const parseM3u = (filePath) => {
-            if (!fs.existsSync(filePath)) return [];
-            const content = fs.readFileSync(filePath, 'utf-8');
-            const lines = content.split('\n').filter(line => line.trim() !== '' && !line.startsWith('#EXTM3U'));
-            const result = [];
-            for (let i = 0; i < lines.length; i += 2) {
-                if (lines[i] && lines[i + 1]) {
-                    result.push({
-                        info: lines[i],
-                        url: lines[i + 1],
-                        // 提取标题用于排序：取逗号后面的部分
-                        title: lines[i].split(',')[1] || "" 
-                    });
+
+    if (fs.existsSync(mainFile) || fs.existsSync(pidFile)) {
+        console.log(style.info(`\n正在例行整理 [${TASK_CONFIG.catName}] 清单...`));
+
+        // 【核心工具：特征识别解析】
+        const parse = (f) => {
+            if (!fs.existsSync(f)) return [];
+            try {
+                const content = fs.readFileSync(f, 'utf-8');
+                // 过滤空行，拿到所有有用行
+                const lines = content.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
+                
+                const result = [];
+                let currentInfo = null;
+
+                for (const line of lines) {
+                    if (line.includes('#EXTM3U')) continue; // 杀掉所有头标
+
+                    if (line.startsWith('#EXTINF')) {
+                        currentInfo = line; // 抓到标题，暂存
+                    } else if (line.startsWith('http')) {
+                        // 发现链接，不论标题在哪，只要有链接就存
+                        result.push({ 
+                            info: currentInfo || `#EXTINF:-1,恢复数据_${Date.now()}`, 
+                            url: line, 
+                            title: currentInfo ? (currentInfo.split(',')[1] || "") : "未知标题"
+                        });
+                        currentInfo = null; // 用完重置，防止一个标题配多个链接
+                    }
                 }
-            }
-            return result;
+                return result;
+            } catch (e) { return []; }
         };
 
-        // 2. 获取旧数据和新数据
-        let allEntries = [...parseM3u(mainFile), ...parseM3u(pidFile)];
-    
-        // 3. 按标题进行字母/数字排序 (localeCompare 支持中文排序)
-        allEntries.sort((a, b) => a.title.localeCompare(b.title, 'zh-Hans-CN', { numeric: true }));
-    
-        // 4. 重新构建带文件头的内容
-        let finalContent = "#EXTM3U\n";
-        allEntries.forEach(item => {
-            finalContent += `${item.info}\n${item.url}\n`;
-        });
+        // 1. 抓取所有数据（包含你现在弄乱的 mainFile）
+        const allData = [...parse(mainFile), ...parse(pidFile)];
 
-        // 5. 覆盖写入主文件并删除临时文件
-        try {
-            fs.writeFileSync(mainFile, finalContent, 'utf-8');
-            fs.unlinkSync(pidFile);
-            console.log(style.success(`\n✨ 已按标题排序并合并至: ${path.basename(mainFile)}`));
-        } catch (err) {
-            console.log(style.error(`\n🚨 文件操作失败: ${err.message}`));
+        if (allData.length > 0) {
+            // 2. 强制按标题排序
+            allData.sort((a, b) => 
+                a.title.localeCompare(b.title, 'zh-Hans-CN', { numeric: true })
+            );
+
+            // 3. 重新生成标准 M3U8 格式
+            // 每一个 item 都会被重新格式化为标准的：标题换行链接
+            const body = allData.map(i => `${i.info}\n${i.url}`).join('\n');
+            const finalContent = `#EXTM3U8\n${body}\n`;
+            
+            try {
+                fs.writeFileSync(mainFile, finalContent, 'utf-8');
+                // 4. 清理临时碎片
+                if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile);
+                console.log(style.success(`✨ [${TASK_CONFIG.catName}] 修复并排序完成！`));
+            } catch (e) { 
+                console.log(style.error(`🚨 写入总表失败: ${e.message}`)); 
+            }
         }
     }
     
