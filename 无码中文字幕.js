@@ -18,7 +18,7 @@ const args = process.argv.slice(2);
 // 🛠️ 顶层参数配置区 (所有修改仅在此处)
 // ========================================================
 const TASK_CONFIG = {
-    baseUrl: 'http://1794ck.cc',       // 初始目标域名
+    baseUrl: 'http://1797ck.cc',       // 初始目标域名
     catId: '8',                      // 分类 ID
     catName: '无码中文字幕',               // 分类名称
     startPage: parseInt(args[0]) || 1,
