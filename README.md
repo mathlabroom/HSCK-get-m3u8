@@ -5,9 +5,9 @@
   1). 在你的crawler.js所在文件夹目录下执行：  
   npm install playwright  
   2). 安装浏览器内核（如果报错找不到浏览器时才需要）：    
-  npx playwright install chromium  
+  npx playwright install chromium  //已改为使用edge浏览器，可自己配置浏览器目录。
   脚本有查重功能，不会重复爬取重复视频。  
-3.  powershell或终端运行node crawler.js
+3.  运行start.bat可运行全部爬取脚本，也可powershell运行node ****.js运行单个js。
   
 ##  备注
 const CONFIG = {  
