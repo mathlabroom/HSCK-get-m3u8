@@ -8,14 +8,3 @@
   npx playwright install chromium  //已改为使用edge浏览器，可自己配置浏览器目录。  
   脚本有查重功能，不会重复爬取重复视频。  
 3.  运行start.bat可运行全部爬取脚本，也可powershell运行node ****.js运行单个js。
-  
-##  备注
-const CONFIG = {  
-    baseUrl: 'http://1771ck.cc', //网址  
-    categories: [  
-        //{ id: '26', name: '骑兵破解', stopM: 3, stopD: 31 },      //1771ck.cc/vodtype/15.html中的15，可以设置爬取结束日期  
-        { id: '8',  name: '无码中文字幕', stopM: 3, stopD: 28 }  
-    ],  
-    saveDir: './VideoResults',  
-    dbFile: './history_db.json'  
-};
