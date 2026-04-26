@@ -14,7 +14,7 @@ STOP_DAY = target_date.day
 print(f"📅 自动识别抓取标准：{STOP_MONTH}月{STOP_DAY}日之后的数据")
 
 # --- 配置区 ---
-BASE_URL = "http://ck0h.cc/"
+BASE_URL = "http://ck0j.cc/"
 
 CATS = [
     {"id": "2", "name": "国产系列"},
