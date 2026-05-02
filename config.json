@@ -1,5 +1,5 @@
 {
-    "BASE_URL": "http://456109.xyz",
+    "BASE_URL": "http://456115.xyz",
     "CATS": [
         {
             "id": "2",
@@ -34,5 +34,5 @@
             "name": "动漫"
         }
     ],
-    "STOP_DAYS_AGO": 1
+    "STOP_DAYS_AGO": 10
 }
